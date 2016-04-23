@@ -1,0 +1,3 @@
+C:\Users\Alf\Documents\Visual Studio 2015\Projects\NASA_Wallpaper\NASA_Wallpaper\bin\Debug\Wallpaper.exe.config
+C:\Users\Alf\Documents\Visual Studio 2015\Projects\NASA_Wallpaper\NASA_Wallpaper\obj\Debug\Wallpaper.exe
+C:\Users\Alf\Documents\Visual Studio 2015\Projects\NASA_Wallpaper\NASA_Wallpaper\obj\Debug\Wallpaper.pdb
