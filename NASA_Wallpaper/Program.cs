@@ -8,6 +8,8 @@ using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
 
+//TODO: Find and show title and explanation. Possibly open website in browser if the user wants that.
+
 namespace Background
 {
     class Program
@@ -74,7 +76,7 @@ namespace Background
             String filePath;
             String pictureURL;
             WebClient client = new WebClient();
-            Console.WriteLine("------URL: " + baseURL + "ap" + date + ".html");
+            Console.WriteLine("Fetching HTML code from: " + baseURL + "ap" + date + ".html");
             try
             {
                 htmlCode = client.DownloadString(baseURL + "ap" + date + ".html");
@@ -85,7 +87,7 @@ namespace Background
                 String nameExpr = @"\w+\.\b";
                 reg = new Regex(nameExpr);
                 picName = reg.Match(filePath).Value;
-                Console.WriteLine("--------- Filename: " + picName);
+                Console.WriteLine("Found picture: " + picName);
                 Image background = downloadBackground(pictureURL);
 
 
@@ -119,19 +121,19 @@ namespace Background
 
                 preMillennial = (year >= 95);
 
-                if(year == thisYear)
+                if (year == thisYear)
                 {
-                         if (month == thisMonth)    if (day <= thisDay) ok = true;
-                    else if (month < thisMonth)     if (day <= 31)      ok = true;
+                         if (month == thisMonth) {  if (day <= thisDay) ok = true;}
+                    else if (month < thisMonth)  {  if (day <= 31)      ok = true;}
                 }
                 else if(year < thisYear || year >= 96)
                 {
-                         if (month <= 12)           if (day <= 31)      ok = true;
+                         if (month <= 12) {         if (day <= 31)      ok = true;}
                 }
                 else if (year == 95)
                 {
-                         if (month == 6)            if (day >= 16)      ok = true;
-                    else if (month <= 12)           if (day <= 31)      ok = true;
+                         if (month == 6)  {         if (day >= 16)      ok = true;}
+                    else if (month <= 12) {         if (day <= 31)      ok = true;}
                 }
 
                 if (ok) //Convert: DDMMYY --> YYMMDD
@@ -228,6 +230,5 @@ namespace Background
             NativeMethods.SystemParametersInfo(SET_DESKTOP_BACKGROUND, 0, getBackgroundPath(), UPDATE_INI_FILE | SEND_WINDOWS_INI_CHANGE);
             Console.WriteLine("Set background!\n");
         }
-
     }
 }
