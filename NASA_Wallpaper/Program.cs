@@ -19,13 +19,12 @@ namespace Background
 
         static void Main()
         {
-
             while (true)
             {
                 date = DateTime.Today.ToString("yyMMdd");
 
                 Console.WriteLine("------------------------------------------------------------");
-                Console.WriteLine("NASA has posted a new picture - occasionally video which cannot be set as background - each day since the 16th of June 1995. How awesome is that!!?");
+                Console.WriteLine("NASA has posted a new picture - occasionally video which cannot be set as wallpaper - each day since the 16th of June 1995. How awesome is that!!?");
                 Console.WriteLine("This program fetches an image of the day from " + baseURL + "archivepix.html");
                 Console.WriteLine("------------------------------------------------------------");
                 Console.WriteLine("Input commands:");
@@ -60,7 +59,7 @@ namespace Background
                 }
                 else
                 {
-                    Console.WriteLine("Invalid input. Try again.");
+                    Console.WriteLine(input + " is an invalid input. Try again.");
                 }
                 Console.WriteLine();
             }
@@ -91,7 +90,7 @@ namespace Background
 
 
                 saveBackground(background);
-                setBackground(background, PicturePosition.Fill);
+                setBackground(PicturePosition.Fill);
                 return true;
             }
             catch (WebException e)
@@ -120,76 +119,60 @@ namespace Background
 
                 preMillennial = (year >= 95);
 
-                Console.WriteLine(day.ToString() + month.ToString() + year.ToString());
-
                 if(year == thisYear)
                 {
-                    if(month == thisMonth)
-                    {
-                        if(day <= thisDay) ok = true;
-                    }
-                    else if (month < thisMonth)
-                    {
-                        if (day <= 31) ok = true;
-                    }
+                         if (month == thisMonth)    if (day <= thisDay) ok = true;
+                    else if (month < thisMonth)     if (day <= 31)      ok = true;
                 }
                 else if(year < thisYear || year >= 96)
                 {
-                    if (month <= 12)
-                    {
-                        if (day <= 31) ok = true;
-                    }
+                         if (month <= 12)           if (day <= 31)      ok = true;
                 }
                 else if (year == 95)
                 {
-                    if (month == 6)
-                    {
-                        if (day >= 16) ok = true;
-                    }
-                    else if (month <= 12)
-                    {
-                        if (day <= 31) ok = true;
-                    }
+                         if (month == 6)            if (day >= 16)      ok = true;
+                    else if (month <= 12)           if (day <= 31)      ok = true;
                 }
 
-                if (ok)
-                {
-                    input = input[4].ToString() + input[5].ToString() + input[2].ToString() + input[3].ToString() + input[0].ToString() + input[1].ToString();
-                }
+                if (ok) //Convert: DDMMYY --> YYMMDD
+                    input = input[4].ToString()
+                        + input[5].ToString()
+                        + input[2].ToString()
+                        + input[3].ToString()
+                        + input[0].ToString()
+                        + input[1].ToString();
             }
-            
             return ok;
         }
 
         public static Image downloadBackground(String URL)
         {
-            Console.WriteLine();
-            Console.WriteLine(URL);
-            Console.WriteLine();
+            Console.WriteLine("Downloading: " + URL);
+            Console.WriteLine(" ...");
             HttpWebRequest httpWebRequest = (HttpWebRequest)HttpWebRequest.Create(URL);
             HttpWebResponse httpWebReponse = (HttpWebResponse)httpWebRequest.GetResponse();
             Stream stream = httpWebReponse.GetResponseStream();
             Image background = Image.FromStream(stream);
-            Console.WriteLine("Downloaded background!\n");
+            Console.WriteLine("Downloaded done!");
             return background;
         }
 
         public static String getBackgroundPath()
         {
-            String directory = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures) + "/NASA Backgrounds/";
+            String directory = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures) + "/NASA Wallpapers/";
             Directory.CreateDirectory(directory);
             String picDate = preMillennial ? "19" : "20";
             picDate += date[0].ToString() + date[1].ToString() + "-" + date[2].ToString() + date[3].ToString() + "-" + date[4].ToString() + date[5].ToString();
-            return Path.Combine(directory, picDate + "_" + picName + "bmp");
+            return Path.Combine(directory, picDate + "_" + picName + "jpg");
         }
 
         public static Boolean saveBackground(Image background)
         {
             try
             {
-                Console.WriteLine("Saving background...");
-                background.Save(getBackgroundPath(), System.Drawing.Imaging.ImageFormat.Bmp);
-                Console.WriteLine("Saved background!\n");
+                String localPath = getBackgroundPath();
+                Console.WriteLine("Saving picture as: " + localPath);
+                background.Save(localPath, System.Drawing.Imaging.ImageFormat.Jpeg);
                 return true;
             }
             catch { return false; }
@@ -210,7 +193,7 @@ namespace Background
                 int fuWinIni);
         }
 
-        public static void setBackground(Image background, PicturePosition style)
+        public static void setBackground(PicturePosition style)
         {
             Console.WriteLine("Setting background...");
             RegistryKey key = Registry.CurrentUser.OpenSubKey(@"Control Panel\Desktop", true);
