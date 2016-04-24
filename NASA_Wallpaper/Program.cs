@@ -7,8 +7,10 @@ using System.Net;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
+using System.Collections.Generic;
+using System.Globalization;
 
-//TODO: Find and show title and explanation. Possibly open website in browser if the user wants that.
+//TODO: Find explanation (how to sort out the links... very regEx mind bending). Possibly open website in browser if the user wants that.(?)
 
 namespace Background
 {
@@ -32,7 +34,7 @@ namespace Background
                 Console.WriteLine("Input commands:");
                 //OBS: input format is reversed compared to NASA's. I find DDMMYY easier to use and convert it in isVAlidDate() to NASA's YYMMDD format.
                 Console.WriteLine(" - 'DDMMYY'            Eg. 140315 for the 14th of March 2015");
-                Console.WriteLine(" - 'r' or 'random'     Gives you a random image (Not yet implemented)");
+                Console.WriteLine(" - 'r' or 'random'     Gives you a random image");
                 Console.WriteLine(" - ''                  No input will give you today's image");
                 Console.WriteLine(" - 'q' or 'quit'       Quits the program");
 
@@ -43,16 +45,27 @@ namespace Background
                     preMillennial = false;
                     Console.WriteLine("Attempting to download today's picture");
 
-                    Boolean success = setPicture(baseURL, date);
-                    if (success) break;
+                    Boolean success = setPicture(baseURL);
+                    if (success && !tryAgain()) break;
                 }
-                else if (isValidDate(ref input, date))
+                else if (isValidDate(ref input))
                 {
-                    Console.WriteLine("Attempting to download picture for " + input);
                     date = input;
 
-                    Boolean success = setPicture(baseURL, date);
-                    if(success) break;
+                    Boolean success = setPicture(baseURL);
+                    if(success && !tryAgain()) break;
+                }
+                else if (input == "r" || input == "random" || input == "R" || input == "Random" || input == "RANDOM")
+                {
+                    for (int i = 0; i < 5; i++)
+                    {
+                        Console.WriteLine("Generating a random date ...");
+                        date = randomDate();
+
+                        Boolean success = setPicture(baseURL);
+                        if (success) break;
+                    }
+                    if (!tryAgain()) break;
                 }
                 else if (input == "q" || input == "quit" || input == "Q" || input == "QUIT")
                 {
@@ -65,32 +78,47 @@ namespace Background
                 }
                 Console.WriteLine();
             }
-            //Console.ReadLine();
         }
 
-        public static Boolean setPicture(String baseURL, String date)
+        public static Boolean tryAgain()
         {
-            String pathExpr = @"\bimage\S+(.jpg|.gif|.png)\b";
-            Regex reg = new Regex(pathExpr);
+            for (int i = 0; i < 5; i++)
+            {
+                Console.WriteLine("Try again? y/n");
+                String again = Console.ReadLine();
+                if (again == "y" || again == "yes" || again == "Y" || again == "Yes" || again == "YES") return true;
+                if (again == "n" || again == "no" || again == "N" || again == "No" || again == "NO") return false;
+                Console.Write("Invalid Input\t");
+            }
+            return false;
+        }
+
+        public static Boolean setPicture(String baseURL)
+        {
             String htmlCode;
             String filePath;
             String pictureURL;
             WebClient client = new WebClient();
-            Console.WriteLine("Fetching HTML code from: " + baseURL + "ap" + date + ".html");
+            //Console.WriteLine("Fetching HTML code from: " + baseURL + "ap" + date + ".html");
             try
             {
                 htmlCode = client.DownloadString(baseURL + "ap" + date + ".html");
                 //Console.WriteLine("HTMLcode = " + htmlCode);
-                filePath = reg.Match(htmlCode).Value;
+                String pathExpr = @"\bimage\S+(.jpg|.gif|.png)\b";
+                Regex reg = new Regex(pathExpr);
+                Match match = reg.Match(htmlCode);
+                if (!match.Success)
+                {
+                    Console.WriteLine("Unfortunately no image was found for this date.");
+                    return false;
+                }
+                filePath = match.Value;
                 pictureURL = baseURL + filePath;
 
-                String nameExpr = @"\w+\.\b";
-                reg = new Regex(nameExpr);
-                picName = reg.Match(filePath).Value;
-                Console.WriteLine("Found picture: " + picName);
+                picName = findName(htmlCode);
+                Console.WriteLine("\tTitle:" + picName);
+
                 Image background = downloadBackground(pictureURL);
-
-
                 saveBackground(background);
                 setBackground(PicturePosition.Fill);
                 return true;
@@ -102,49 +130,84 @@ namespace Background
             }
         }
 
-        public static Boolean isValidDate(ref String input, String today)
+        public static String randomDate()
         {
-            Boolean ok = false;
-            if (input.Length == 6)
-            {
-                int thisYear = Int32.Parse(today[0].ToString() + today[1].ToString());
-                int thisMonth = Int32.Parse(today[2].ToString() + today[3].ToString());
-                int thisDay = Int32.Parse(today[4].ToString() + today[5].ToString());
+            String ranDate;
+            int year, month, day;
+            Random r = new Random();
+            DateTime today = DateTime.Today;
 
-                int year;
-                int month;
-                int day;
-
-                if (!Int32.TryParse((input[0].ToString() + input[1].ToString()), out day)) return false;
-                if (!Int32.TryParse((input[2].ToString() + input[3].ToString()), out month)) return false;
-                if (!Int32.TryParse((input[4].ToString() + input[5].ToString()), out year)) return false;
-
-                preMillennial = (year >= 95);
-
-                if (year == thisYear)
-                {
-                         if (month == thisMonth) {  if (day <= thisDay) ok = true;}
-                    else if (month < thisMonth)  {  if (day <= 31)      ok = true;}
-                }
-                else if(year < thisYear || year >= 96)
-                {
-                         if (month <= 12) {         if (day <= 31)      ok = true;}
-                }
-                else if (year == 95)
-                {
-                         if (month == 6)  {         if (day >= 16)      ok = true;}
-                    else if (month <= 12) {         if (day <= 31)      ok = true;}
-                }
-
-                if (ok) //Convert: DDMMYY --> YYMMDD
-                    input = input[4].ToString()
-                        + input[5].ToString()
-                        + input[2].ToString()
-                        + input[3].ToString()
-                        + input[0].ToString()
-                        + input[1].ToString();
+            year = r.Next(1995, today.Year + 1); 
+            if (year != today.Year && year != 1995) { // Not this year or 1995: let month and day be anything
+                month = r.Next(1, 12+1);
+                day = r.Next(1, DateTime.DaysInMonth(year, month)+1);
             }
-            return ok;
+            else if(year == today.Year){ // This year: only allow untill today
+                month = r.Next(1, today.Month + 1);
+                if (month != today.Month) {
+                    day = r.Next(1, DateTime.DaysInMonth(year, month)+1);
+                }
+                else {
+                    day = r.Next(1, today.Day + 1);
+                }
+            }
+            else { // 1995: only allow from 16th of June
+                month = r.Next(6, 13);
+                if (month != 6)
+                {
+                    day = r.Next(1, DateTime.DaysInMonth(year, month)+1);
+                }
+                else {
+                    day = r.Next(16, DateTime.DaysInMonth(year, month) + 1);
+                }
+            }
+            preMillennial = year < 2000;
+            DateTime foundDate = new DateTime(year,month, day);
+            Console.WriteLine("Random date: " + foundDate.ToString("D", new CultureInfo("en-US")));
+            return foundDate.ToString("yyMMdd");
+        }
+
+        public static Boolean isValidDate(ref String inputDate)
+        {
+            DateTime inputDateTime;
+            DateTime today = DateTime.Today;
+            DateTime oldest;
+            DateTime.TryParseExact("160695", "ddMMyy", new CultureInfo("en-US"), DateTimeStyles.None, out oldest);
+
+            if (!DateTime.TryParseExact(inputDate, "ddMMyy", new CultureInfo("en-US"), DateTimeStyles.None, out inputDateTime)) return false;
+            if (inputDateTime < oldest || inputDateTime > today) return false;
+            Console.WriteLine("Attempting to download picture of " + inputDateTime.ToString("D", new CultureInfo("en-US")));
+            preMillennial = inputDateTime.Year < 2000;
+            inputDate = inputDateTime.ToString("yyMMdd");
+            return true;
+        }
+
+        public static String findName(String htmlCode)
+        {
+            Regex reg;
+            String name = "";
+            String titleExpr = @"\-\s.+"; // The title comes right after "- " in the htmlCode
+            reg = new Regex(titleExpr);
+            String title = reg.Match(htmlCode).Value;
+            reg = new Regex(@"\<.+");
+            title = reg.Replace(title, ""); // The older html codes end with </title> on the same line. Get rid of that here.
+
+            int titleLength = title.Length - 1;
+            if (title[titleLength] == ' ') titleLength--;
+
+            //title = @"all:them/bad > guys \ are noW ? able : to<be fu**ed uP by regEx!?#-@ " + '"'.ToString();
+            String illegalCharsExpr = @"\:|\\|\/|\||\<|\>|\?|\*|\" + '"'.ToString();
+            reg = new Regex(illegalCharsExpr);
+            List<int> badGuys = new List<int>();
+            foreach (Match badGuy in reg.Matches(title))
+            {
+                badGuys.Add(badGuy.Index);
+            }
+            for (int i = 1; i <= titleLength; i++)
+            {   // Get rid of the "- " in the beginning and potential extra ending space + all the badguys that are not allowed in a file name
+                if (!badGuys.Contains(i))   name += title[i].ToString();
+            }
+            return name;
         }
 
         public static Image downloadBackground(String URL)
@@ -155,7 +218,7 @@ namespace Background
             HttpWebResponse httpWebReponse = (HttpWebResponse)httpWebRequest.GetResponse();
             Stream stream = httpWebReponse.GetResponseStream();
             Image background = Image.FromStream(stream);
-            Console.WriteLine("Downloaded done!");
+            Console.WriteLine("Download done!");
             return background;
         }
 
@@ -165,7 +228,7 @@ namespace Background
             Directory.CreateDirectory(directory);
             String picDate = preMillennial ? "19" : "20";
             picDate += date[0].ToString() + date[1].ToString() + "-" + date[2].ToString() + date[3].ToString() + "-" + date[4].ToString() + date[5].ToString();
-            return Path.Combine(directory, picDate + "_" + picName + "jpg");
+            return Path.Combine(directory, picDate + picName + ".jpg");
         }
 
         public static Boolean saveBackground(Image background)
@@ -197,7 +260,7 @@ namespace Background
 
         public static void setBackground(PicturePosition style)
         {
-            Console.WriteLine("Setting background...");
+            //Console.WriteLine("Setting background...");
             RegistryKey key = Registry.CurrentUser.OpenSubKey(@"Control Panel\Desktop", true);
             switch (style)
             {
@@ -228,7 +291,7 @@ namespace Background
             const int UPDATE_INI_FILE = 1;
             const int SEND_WINDOWS_INI_CHANGE = 2;
             NativeMethods.SystemParametersInfo(SET_DESKTOP_BACKGROUND, 0, getBackgroundPath(), UPDATE_INI_FILE | SEND_WINDOWS_INI_CHANGE);
-            Console.WriteLine("Set background!\n");
+            Console.WriteLine("Wallpaper set and done!");
         }
     }
 }
