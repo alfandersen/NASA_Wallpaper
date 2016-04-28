@@ -46,14 +46,14 @@ namespace Background
                     Console.WriteLine("Attempting to download today's picture");
 
                     Boolean success = setPicture(baseURL);
-                    if (success && !tryAgain()) break;
+                   // if (success && !tryAgain()) break;
                 }
                 else if (isValidDate(ref input))
                 {
                     date = input;
 
                     Boolean success = setPicture(baseURL);
-                    if(success && !tryAgain()) break;
+                   // if(success && !tryAgain()) break;
                 }
                 else if (input == "r" || input == "random" || input == "R" || input == "Random" || input == "RANDOM")
                 {
@@ -65,7 +65,7 @@ namespace Background
                         Boolean success = setPicture(baseURL);
                         if (success) break;
                     }
-                    if (!tryAgain()) break;
+                   // if (!tryAgain()) break;
                 }
                 else if (input == "q" || input == "quit" || input == "Q" || input == "QUIT")
                 {
@@ -79,7 +79,7 @@ namespace Background
                 Console.WriteLine();
             }
         }
-
+/*
         public static Boolean tryAgain()
         {
             for (int i = 0; i < 5; i++)
@@ -92,7 +92,7 @@ namespace Background
             }
             return false;
         }
-
+*/
         public static Boolean setPicture(String baseURL)
         {
             String htmlCode;
@@ -116,7 +116,25 @@ namespace Background
                 pictureURL = baseURL + filePath;
 
                 picName = findName(htmlCode);
-                Console.WriteLine("\tTitle:" + picName);
+
+                DateTime picDateTime;
+                String dateString = date;
+                if(DateTime.TryParseExact(date, "yyMMdd", new CultureInfo("en-US"), DateTimeStyles.None, out picDateTime))
+                    dateString = picDateTime.ToString("D", new CultureInfo("en-US"));
+                dateString += ": ";
+                Console.Write("\t");
+                for(int i = 0; i < dateString.Length + picName.Length; i++)
+                {
+                    Console.Write("-");
+                }
+                Console.WriteLine();
+                Console.WriteLine("\t" + dateString + picName);
+                Console.Write("\t");
+                for (int i = 0; i < dateString.Length + picName.Length; i++)
+                {
+                    Console.Write("-");
+                }
+                Console.WriteLine();
 
                 Image background = downloadBackground(pictureURL);
                 saveBackground(background);
