@@ -181,7 +181,6 @@ namespace Background
             }
             preMillennial = year < 2000;
             DateTime foundDate = new DateTime(year,month, day);
-            Console.WriteLine("Random date: " + foundDate.ToString("D", new CultureInfo("en-US")));
             return foundDate.ToString("yyMMdd");
         }
 
