@@ -31,8 +31,8 @@ namespace DailyBackground
             else
                 Console.WriteLine("Failed!!");
 
-            Console.WriteLine("Press any key to finish.");
-            Console.ReadKey();
+            //Console.WriteLine("Press any key to finish.");
+            //Console.ReadKey();
         }
         
         static Boolean setPicture()
