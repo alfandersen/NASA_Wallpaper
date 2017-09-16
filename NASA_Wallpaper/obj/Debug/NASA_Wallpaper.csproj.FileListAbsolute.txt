@@ -6,3 +6,11 @@ C:\Users\Alf\Documents\Visual Studio 2015\Projects\NASA_Wallpaper\NASA_Wallpaper
 C:\Users\Alf\Documents\Visual Studio 2015\Projects\NASA_Wallpaper\NASA_Wallpaper\bin\Debug\Newtonsoft.Json.dll
 C:\Users\Alf\Documents\Visual Studio 2015\Projects\NASA_Wallpaper\NASA_Wallpaper\bin\Debug\Newtonsoft.Json.xml
 C:\Users\Alf\Documents\Visual Studio 2015\Projects\NASA_Wallpaper\NASA_Wallpaper\obj\Debug\NASA_Wallpaper.csprojResolveAssemblyReference.cache
+C:\Users\alfan\Documents\Visual Studio 2017\Projects\NASA_Wallpaper\NASA_Wallpaper\bin\Debug\Wallpaper.exe.config
+C:\Users\alfan\Documents\Visual Studio 2017\Projects\NASA_Wallpaper\NASA_Wallpaper\bin\Debug\Wallpaper.exe
+C:\Users\alfan\Documents\Visual Studio 2017\Projects\NASA_Wallpaper\NASA_Wallpaper\bin\Debug\Wallpaper.pdb
+C:\Users\alfan\Documents\Visual Studio 2017\Projects\NASA_Wallpaper\NASA_Wallpaper\bin\Debug\Newtonsoft.Json.dll
+C:\Users\alfan\Documents\Visual Studio 2017\Projects\NASA_Wallpaper\NASA_Wallpaper\bin\Debug\Newtonsoft.Json.xml
+C:\Users\alfan\Documents\Visual Studio 2017\Projects\NASA_Wallpaper\NASA_Wallpaper\obj\Debug\NASA_Wallpaper.csprojResolveAssemblyReference.cache
+C:\Users\alfan\Documents\Visual Studio 2017\Projects\NASA_Wallpaper\NASA_Wallpaper\obj\Debug\Wallpaper.exe
+C:\Users\alfan\Documents\Visual Studio 2017\Projects\NASA_Wallpaper\NASA_Wallpaper\obj\Debug\Wallpaper.pdb
