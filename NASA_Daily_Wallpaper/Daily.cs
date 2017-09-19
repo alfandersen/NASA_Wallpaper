@@ -94,14 +94,12 @@ namespace DailyBackground
         {
             Regex reg;
             String name = "";
-            String titleExpr = @"\-\s.+"; // The title comes right after "- " in the htmlCode
-            reg = new Regex(titleExpr);
+            reg = new Regex(@"<center>[\r|\n]<b>.*\<\/");
             String title = reg.Match(htmlCode).Value;
-            reg = new Regex(@"\<.+");
-            title = reg.Replace(title, ""); // The older html codes end with </title> on the same line. Get rid of that here.
+            title = title.Substring(12,title.Length-14);
+            Console.WriteLine("title = "+title);
 
-            int titleLength = title.Length - 1;
-            if (title[titleLength] == ' ') titleLength--;
+            if(title.Length == 0) return "No Title";
 
             //title = @"all:them/bad > guys \ are noW ? able : to<be fu**ed uP by regEx!?#-@ " + '"'.ToString();
             String illegalCharsExpr = @"\:|\\|\/|\||\<|\>|\?|\*|\" + '"'.ToString();
@@ -111,11 +109,12 @@ namespace DailyBackground
             {
                 badGuys.Add(badGuy.Index);
             }
-            for (int i = 1; i <= titleLength; i++)
-            {   // Get rid of the "- " in the beginning and potential extra ending space + all the badguys that are not allowed in a file name
+            for (int i = 1; i <= title.Length - 1; i++)
+            {   // Get rid of all the badguys that are not allowed in a file name
                 if (!badGuys.Contains(i)) name += title[i].ToString();
+                if (title[i] == ':') name += " -";
             }
-            return name;
+            return name.Trim();
         }
 
         static Image downloadBackground(String URL)
@@ -136,7 +135,7 @@ namespace DailyBackground
             Directory.CreateDirectory(directory);
             String picDate = "20";
             picDate += date[0].ToString() + date[1].ToString() + "-" + date[2].ToString() + date[3].ToString() + "-" + date[4].ToString() + date[5].ToString();
-            return Path.Combine(directory, picDate + picName + ".jpg");
+            return Path.Combine(directory, picDate + " " + picName + ".jpg");
         }
 
         static Boolean saveBackground(Image background)
