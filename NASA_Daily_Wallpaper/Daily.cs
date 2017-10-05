@@ -94,7 +94,7 @@ namespace DailyBackground
         {
             Regex reg;
             String name = "";
-            reg = new Regex(@"<center>[\r|\n]<b>.*\<\/");
+            reg = new Regex(@"<center>[\r|\n]+<b>.*\<\/");
             String title = reg.Match(htmlCode).Value;
             title = title.Substring(12,title.Length-14);
             Console.WriteLine("title = "+title);
@@ -102,7 +102,7 @@ namespace DailyBackground
             if(title.Length == 0) return "No Title";
 
             //title = @"all:them/bad > guys \ are noW ? able : to<be fu**ed uP by regEx!?#-@ " + '"'.ToString();
-            String illegalCharsExpr = @"\:|\\|\/|\||\<|\>|\?|\*|\" + '"'.ToString();
+            String illegalCharsExpr = @"\:|\\|\/|\||\<|\>|\?|\*|\n" + '"'.ToString();
             reg = new Regex(illegalCharsExpr);
             List<int> badGuys = new List<int>();
             foreach (Match badGuy in reg.Matches(title))
