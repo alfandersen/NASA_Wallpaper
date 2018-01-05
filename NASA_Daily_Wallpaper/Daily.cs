@@ -18,21 +18,19 @@ namespace DailyBackground
     {
         
         static String baseURL = "https://apod.nasa.gov/apod/";
-        static String date;
+        static DateTime date;
         static String picName;
 
         static void Main()
         {
-            date = DateTime.Today.ToString("yyMMdd");
-
             Console.WriteLine("Downloading todays picture from "+baseURL+ "astropix.html ...");
             if (setPicture())
                 Console.WriteLine("Success!!");
             else
                 Console.WriteLine("Failed!!");
 
-            //Console.WriteLine("Press any key to finish.");
-            //Console.ReadKey();
+            Console.WriteLine("Press any key to finish.");
+            Console.ReadKey();
         }
         
         static Boolean setPicture()
@@ -58,24 +56,16 @@ namespace DailyBackground
                 pictureURL = baseURL + filePath;
 
                 picName = findName(htmlCode);
+                date = findDate(htmlCode);
 
-                DateTime picDateTime;
-                String dateString = date;
-                if (DateTime.TryParseExact(date, "yyMMdd", new CultureInfo("en-US"), DateTimeStyles.None, out picDateTime))
-                    dateString = picDateTime.ToString("D", new CultureInfo("en-US"));
-                dateString += ": ";
+                String dateString = date.ToString("D", new CultureInfo("en-US"))+": ";
+                
                 Console.Write("\t");
-                for (int i = 0; i < dateString.Length + picName.Length; i++)
-                {
-                    Console.Write("-");
-                }
+                for (int i = 0; i < dateString.Length + picName.Length; i++) Console.Write("-");
                 Console.WriteLine();
                 Console.WriteLine("\t" + dateString + picName);
                 Console.Write("\t");
-                for (int i = 0; i < dateString.Length + picName.Length; i++)
-                {
-                    Console.Write("-");
-                }
+                for (int i = 0; i < dateString.Length + picName.Length; i++) Console.Write("-");
                 Console.WriteLine();
 
                 Image background = downloadBackground(pictureURL);
@@ -88,6 +78,16 @@ namespace DailyBackground
                 Console.WriteLine("Error fetching image: " + e);
                 return false;
             }
+        }
+
+        static DateTime findDate(String htmlCode)
+        {
+            String match = new Regex(@"\b(\d{4} \w+ \d{1,2})\b").Match(htmlCode).Groups[1].Value;
+            DateTime picDateTime;
+            if (DateTime.TryParseExact(match, "yyyy MMMM d", new CultureInfo("en-US"), DateTimeStyles.AllowWhiteSpaces, out picDateTime))
+                return picDateTime;
+            else
+                return DateTime.Now;
         }
 
         static String findName(String htmlCode)
@@ -133,8 +133,7 @@ namespace DailyBackground
         {
             String directory = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures) + "/NASA Wallpapers/";
             Directory.CreateDirectory(directory);
-            String picDate = "20";
-            picDate += date[0].ToString() + date[1].ToString() + "-" + date[2].ToString() + date[3].ToString() + "-" + date[4].ToString() + date[5].ToString();
+            String picDate = date.ToString("yyyy-MM-dd");
             return Path.Combine(directory, picDate + " " + picName + ".jpg");
         }
 
