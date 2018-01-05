@@ -1,13 +1,10 @@
 ﻿using Microsoft.Win32;
-using Newtonsoft.Json;
 using System;
 using System.Drawing;
 using System.IO;
 using System.Net;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
-using System.Windows.Forms;
-using System.Collections.Generic;
 using System.Globalization;
 
 //TODO: Find explanation (how to sort out the links... very regEx mind bending). Possibly open website in browser if the user wants that.(?)
@@ -17,72 +14,47 @@ namespace DailyBackground
     class Daily
     {
         
-        static String baseURL = "https://apod.nasa.gov/apod/";
-        static DateTime date;
-        static String picName;
 
         static void Main()
         {
+            String baseURL = "https://apod.nasa.gov/apod/";
             Console.WriteLine("Downloading todays picture from "+baseURL+ "astropix.html ...");
-            if (setPicture())
-                Console.WriteLine("Success!!");
-            else
-                Console.WriteLine("Failed!!");
 
+            String html = downloadSource(baseURL+"astropix.html");
+            String picture;
+            Image image;
+            if((picture = findPicture(html)) != null && (image = downloadImage(baseURL+picture)) != null)
+            {
+                String picName = findName(html);
+                DateTime date = findDate(html);
+                printDateAndName(date, picName);
+                String filePath = getBackgroundPath(date.ToString("yyyy-MM-dd") + " " + picName + ".jpg");
+                saveBackground(image, filePath);
+                setBackground(PicturePosition.Fill, filePath);
+            }
+
+            /*
             Console.WriteLine("Press any key to finish.");
             Console.ReadKey();
-        }
-        
-        static Boolean setPicture()
-        {
-            String htmlCode;
-            String filePath;
-            String pictureURL;
-            WebClient client = new WebClient();
-            Console.WriteLine("Fetching HTML code ...");
-            try
-            {
-                htmlCode = client.DownloadString(baseURL+ "astropix.html");
-                //Console.WriteLine("HTMLcode = " + htmlCode);
-                String pathExpr = @"\bimage\S+(.jpg|.gif|.png)\b";
-                Regex reg = new Regex(pathExpr);
-                Match match = reg.Match(htmlCode);
-                if (!match.Success)
-                {
-                    Console.WriteLine("Unfortunately no image was found today.");
-                    return false;
-                }
-                filePath = match.Value;
-                pictureURL = baseURL + filePath;
-
-                picName = findName(htmlCode);
-                date = findDate(htmlCode);
-
-                String dateString = date.ToString("D", new CultureInfo("en-US"))+": ";
-                
-                Console.Write("\t");
-                for (int i = 0; i < dateString.Length + picName.Length; i++) Console.Write("-");
-                Console.WriteLine();
-                Console.WriteLine("\t" + dateString + picName);
-                Console.Write("\t");
-                for (int i = 0; i < dateString.Length + picName.Length; i++) Console.Write("-");
-                Console.WriteLine();
-
-                Image background = downloadBackground(pictureURL);
-                saveBackground(background);
-                setBackground(PicturePosition.Fill);
-                return true;
-            }
-            catch (WebException e)
-            {
-                Console.WriteLine("Error fetching image: " + e);
-                return false;
-            }
+            //*/
         }
 
-        static DateTime findDate(String htmlCode)
+        private static string downloadSource(string page)
         {
-            String match = new Regex(@"\b(\d{4} \w+ \d{1,2})\b").Match(htmlCode).Groups[1].Value;
+            return new WebClient().DownloadString(page);
+        }
+
+        private static string findPicture(string html)
+        {
+            String pattern = @"<img src=""(.*(\.jpg|.png|.gif))""";
+            Match m = Regex.Match(html, pattern, RegexOptions.IgnoreCase);
+            return m.Groups[1].Value;
+        }
+
+        static DateTime findDate(String html)
+        {
+            String pattern = @"\b(\d{4} \w+ \d{1,2})\b";
+            String match = Regex.Match(html, pattern).Groups[1].Value; ;
             DateTime picDateTime;
             if (DateTime.TryParseExact(match, "yyyy MMMM d", new CultureInfo("en-US"), DateTimeStyles.AllowWhiteSpaces, out picDateTime))
                 return picDateTime;
@@ -90,60 +62,73 @@ namespace DailyBackground
                 return DateTime.Now;
         }
 
-        static String findName(String htmlCode)
+        static String findName(String html)
         {
-            Regex reg;
+            String pattern = @"<center>[\r|\n]+<b>(.*)\<\/";
+            String title = Regex.Match(html, pattern, RegexOptions.IgnoreCase).Groups[1].Value;
+
+            if (title.Length == 0) return "No Title";
+
+            String bad = "\\/|<>?*\n" + '"';
             String name = "";
-            reg = new Regex(@"<center>[\r|\n]+<b>.*\<\/");
-            String title = reg.Match(htmlCode).Value;
-            title = title.Substring(12,title.Length-14);
-            Console.WriteLine("title = "+title);
-
-            if(title.Length == 0) return "No Title";
-
-            //title = @"all:them/bad > guys \ are noW ? able : to<be fu**ed uP by regEx!?#-@ " + '"'.ToString();
-            String illegalCharsExpr = @"\:|\\|\/|\||\<|\>|\?|\*|\n" + '"'.ToString();
-            reg = new Regex(illegalCharsExpr);
-            List<int> badGuys = new List<int>();
-            foreach (Match badGuy in reg.Matches(title))
+            foreach(char c in title.ToCharArray())
             {
-                badGuys.Add(badGuy.Index);
-            }
-            for (int i = 1; i <= title.Length - 1; i++)
-            {   // Get rid of all the badguys that are not allowed in a file name
-                if (!badGuys.Contains(i)) name += title[i].ToString();
-                if (title[i] == ':') name += " -";
+                if (!bad.Contains(c.ToString()))
+                {
+                    if (c == ':') name += " -";
+                    else name += c;
+                }
             }
             return name.Trim();
         }
 
-        static Image downloadBackground(String URL)
+        private static void printDateAndName(DateTime date, string picName)
         {
-            Console.WriteLine("Downloading: " + URL);
-            Console.WriteLine(" ...");
-            HttpWebRequest httpWebRequest = (HttpWebRequest)HttpWebRequest.Create(URL);
-            HttpWebResponse httpWebReponse = (HttpWebResponse)httpWebRequest.GetResponse();
-            Stream stream = httpWebReponse.GetResponseStream();
-            Image background = Image.FromStream(stream);
-            Console.WriteLine("Download done!");
-            return background;
+            String dateString = date.ToString("D", new CultureInfo("en-US")) + ": ";
+            Console.Write("\t");
+            for (int i = 0; i < dateString.Length + picName.Length; i++) Console.Write("-");
+            Console.WriteLine();
+            Console.WriteLine("\t" + dateString + picName);
+            Console.Write("\t");
+            for (int i = 0; i < dateString.Length + picName.Length; i++) Console.Write("-");
+            Console.WriteLine();
         }
 
-        static String getBackgroundPath()
+        static Image downloadImage(String URL)
+        {
+            HttpWebResponse httpWebReponse;
+            Console.WriteLine("Downloading: " + URL);
+            Console.WriteLine(" ...");
+            try
+            {
+                HttpWebRequest httpWebRequest = (HttpWebRequest)HttpWebRequest.Create(URL);
+                httpWebReponse = (HttpWebResponse)httpWebRequest.GetResponse();
+            }
+            catch
+            {
+                Console.WriteLine("FAILED!!");
+                return null;
+            }
+            Stream stream = httpWebReponse.GetResponseStream();
+            Image image = Image.FromStream(stream);
+            stream.Close();
+            Console.WriteLine("Download done!");
+            return image;
+        }
+
+        static String getBackgroundPath(String fileName)
         {
             String directory = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures) + "/NASA Wallpapers/";
             Directory.CreateDirectory(directory);
-            String picDate = date.ToString("yyyy-MM-dd");
-            return Path.Combine(directory, picDate + " " + picName + ".jpg");
+            return Path.Combine(directory, fileName);
         }
 
-        static Boolean saveBackground(Image background)
+        static Boolean saveBackground(Image background, String filePath)
         {
             try
             {
-                String localPath = getBackgroundPath();
-                Console.WriteLine("Saving picture as: " + localPath);
-                background.Save(localPath, System.Drawing.Imaging.ImageFormat.Jpeg);
+                Console.WriteLine("Saving picture as: " + filePath);
+                background.Save(filePath, System.Drawing.Imaging.ImageFormat.Jpeg);
                 return true;
             }
             catch { return false; }
@@ -164,7 +149,7 @@ namespace DailyBackground
                 int fuWinIni);
         }
 
-        public static void setBackground(PicturePosition style)
+        public static void setBackground(PicturePosition style, String filePath)
         {
             //Console.WriteLine("Setting background...");
             RegistryKey key = Registry.CurrentUser.OpenSubKey(@"Control Panel\Desktop", true);
@@ -196,7 +181,7 @@ namespace DailyBackground
             const int SET_DESKTOP_BACKGROUND = 20;
             const int UPDATE_INI_FILE = 1;
             const int SEND_WINDOWS_INI_CHANGE = 2;
-            NativeMethods.SystemParametersInfo(SET_DESKTOP_BACKGROUND, 0, getBackgroundPath(), UPDATE_INI_FILE | SEND_WINDOWS_INI_CHANGE);
+            NativeMethods.SystemParametersInfo(SET_DESKTOP_BACKGROUND, 0, filePath, UPDATE_INI_FILE | SEND_WINDOWS_INI_CHANGE);
             Console.WriteLine("Wallpaper set and done!");
         }
     }
