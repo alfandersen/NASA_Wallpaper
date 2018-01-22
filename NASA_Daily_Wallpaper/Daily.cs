@@ -23,14 +23,21 @@ namespace DailyBackground
             String html = downloadSource(baseURL+"astropix.html");
             String picture;
             Image image;
-            if((picture = findPicture(html)) != null && (image = downloadImage(baseURL+picture)) != null)
+            if((picture = findPicture(html)) != null)
             {
                 String picName = findName(html);
                 DateTime date = findDate(html);
                 printDateAndName(date, picName);
-                String filePath = getBackgroundPath(date.ToString("yyyy-MM-dd") + " " + picName + ".jpg");
-                saveBackground(image, filePath);
-                setBackground(PicturePosition.Fill, filePath);
+                if ((image = downloadImage(baseURL + picture)) != null)
+                {
+                    String filePath = getBackgroundPath(date.ToString("yyyy-MM-dd") + " " + picName + ".jpg");
+                    saveBackground(image, filePath);
+                    setBackground(PicturePosition.Fill, filePath);
+                }
+            }
+            else
+            {
+                Console.WriteLine("No picture today!");
             }
 
             /*
@@ -48,7 +55,8 @@ namespace DailyBackground
         {
             String pattern = @"<img src=""(.*(\.jpg|.png|.gif))""";
             Match m = Regex.Match(html, pattern, RegexOptions.IgnoreCase);
-            return m.Groups[1].Value;
+            if (m.Success) return m.Groups[1].Value;
+            return null;
         }
 
         static DateTime findDate(String html)
