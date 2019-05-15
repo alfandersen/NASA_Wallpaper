@@ -1,8 +1,0 @@
-C:\Users\alfan\Documents\Visual Studio 2017\Projects\NASA_Wallpaper\NASA_Daily_Wallpaper\obj\Debug\NASA_Daily_Wallpaper.csprojResolveAssemblyReference.cache
-C:\Users\alfan\Documents\Visual Studio 2017\Projects\NASA_Wallpaper\NASA_Daily_Wallpaper\bin\Debug\NASA_Daily_Wallpaper.exe.config
-C:\Users\alfan\Documents\Visual Studio 2017\Projects\NASA_Wallpaper\NASA_Daily_Wallpaper\bin\Debug\NASA_Daily_Wallpaper.exe
-C:\Users\alfan\Documents\Visual Studio 2017\Projects\NASA_Wallpaper\NASA_Daily_Wallpaper\bin\Debug\NASA_Daily_Wallpaper.pdb
-C:\Users\alfan\Documents\Visual Studio 2017\Projects\NASA_Wallpaper\NASA_Daily_Wallpaper\bin\Debug\Newtonsoft.Json.dll
-C:\Users\alfan\Documents\Visual Studio 2017\Projects\NASA_Wallpaper\NASA_Daily_Wallpaper\bin\Debug\Newtonsoft.Json.xml
-C:\Users\alfan\Documents\Visual Studio 2017\Projects\NASA_Wallpaper\NASA_Daily_Wallpaper\obj\Debug\NASA_Daily_Wallpaper.exe
-C:\Users\alfan\Documents\Visual Studio 2017\Projects\NASA_Wallpaper\NASA_Daily_Wallpaper\obj\Debug\NASA_Daily_Wallpaper.pdb
