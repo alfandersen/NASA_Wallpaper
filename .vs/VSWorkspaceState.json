@@ -2,12 +2,10 @@
   "ExpandedNodes": [
     "",
     "\\NASA_Daily_Wallpaper",
-    "\\NASA_Daily_Wallpaper\\Properties",
-    "\\NASA_Wallpaper",
+    "\\NASA_Daily_Wallpaper\\packages",
     "\\NASA_Wallpaper\\Properties",
-    "\\packages",
-    "\\packages\\Newtonsoft.Json.8.0.1"
+    "\\packages"
   ],
-  "SelectedNode": "\\NASA_Daily_Wallpaper\\NASA_Daily_Wallpaper.csproj",
+  "SelectedNode": "\\.gitignore",
   "PreviewInSolutionExplorer": false
 }
