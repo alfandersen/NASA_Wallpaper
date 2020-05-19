@@ -28,6 +28,8 @@ namespace DailyBackground
                 String picName = findName(html);
                 DateTime date = findDate(html);
                 printDateAndName(date, picName);
+                String explanation = findExplanation(html);
+                Console.WriteLine("\nExplanation:\n"+explanation+"\n");
                 if ((image = downloadImage(baseURL + picture)) != null)
                 {
                     String filePath = getBackgroundPath(date.ToString("yyyy-MM-dd") + " " + picName + ".jpg");
@@ -40,10 +42,26 @@ namespace DailyBackground
                 Console.WriteLine("No picture today!");
             }
 
-            /*
             Console.WriteLine("Press any key to finish.");
             Console.ReadKey();
-            //*/
+            
+        }
+
+        private static string findExplanation(string html)
+        {
+            String pattern = @"\<b\> Explanation\: \<\/b\>((\n*|.*)*)\<p\>";
+            Match m = Regex.Match(html, pattern, RegexOptions.IgnoreCase);
+            if (!m.Success)
+                return "";
+
+            string explanationHtml = m.Groups[1].Value;
+            pattern = @"(\<[^\>]*\>)";
+            string explanation = Regex.Replace(explanationHtml, pattern, "");
+            pattern = @"(\n)";
+            explanation = Regex.Replace(explanation, pattern, " ");
+            pattern = @"(\s+)";
+            explanation = Regex.Replace(explanation, pattern, " ");
+            return explanation.Trim();
         }
 
         private static string downloadSource(string page)
@@ -53,7 +71,7 @@ namespace DailyBackground
 
         private static string findPicture(string html)
         {
-            String pattern = @"<img src=""(.*(\.jpg|.png|.gif))""";
+            String pattern = @"<a href=""(image\/.*(\.jpg|\.png|\.gif))""";
             Match m = Regex.Match(html, pattern, RegexOptions.IgnoreCase);
             if (m.Success) return m.Groups[1].Value;
             return null;
