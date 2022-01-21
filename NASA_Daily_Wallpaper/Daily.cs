@@ -29,6 +29,7 @@ namespace DailyBackground
                 DateTime date = findDate(html);
                 printDateAndName(date, picName);
                 String explanation = findExplanation(html);
+                explanation = fitToLineWidth(explanation, 119);
                 Console.WriteLine("\nExplanation:\n"+explanation+"\n");
                 if ((image = downloadImage(baseURL + picture)) != null)
                 {
@@ -62,6 +63,26 @@ namespace DailyBackground
             pattern = @"(\s+)";
             explanation = Regex.Replace(explanation, pattern, " ");
             return explanation.Trim();
+        }
+
+        private static string fitToLineWidth(string explanation, int lineWidth)
+        {
+            string[] words = explanation.Split(' ');
+            string fitted = "";
+            int len = 0;
+            foreach (string word in words)
+            {
+                if (len + word.Length > lineWidth)
+                {
+                    fitted = fitted.Trim();
+                    fitted += "\n";
+                    len = 0;
+                }
+                fitted += word + " ";
+                len += word.Length + 1;
+            }
+
+            return fitted;
         }
 
         private static string downloadSource(string page)
