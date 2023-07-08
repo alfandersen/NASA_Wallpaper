@@ -2,40 +2,53 @@
 using System;
 using System.Drawing;
 using System.IO;
-using System.Net;
+using System.Net.Http;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Globalization;
+using System.Threading.Tasks;
 
-//TODO: Find explanation (how to sort out the links... very regEx mind bending). Possibly open website in browser if the user wants that.(?)
+// TODO: Find explanation (how to sort out the links... very regEx mind bending). Possibly open website in browser if the user wants that.(?)
 
 namespace DailyBackground
 {
     class Daily
     {
-        
-
-        static void Main()
+        static async Task Main()
         {
-            String baseURL = "https://apod.nasa.gov/apod/";
-            Console.WriteLine("Downloading todays picture from "+baseURL+ "astropix.html ...");
+            // Define the base URL for downloading the picture
+            string baseURL = "https://apod.nasa.gov/apod/";
+            Console.WriteLine("Downloading today's picture from " + baseURL + "astropix.html ...");
 
-            String html = downloadSource(baseURL+"astropix.html");
-            String picture;
+            // Download the HTML source code of the webpage
+            string html = await DownloadSourceAsync(baseURL + "astropix.html");
+            string picture;
             Image image;
-            if((picture = findPicture(html)) != null)
+
+            // Check if a picture is found in the HTML source code
+            if ((picture = FindPicture(html)) != null)
             {
-                String picName = findName(html);
-                DateTime date = findDate(html);
-                printDateAndName(date, picName);
-                String explanation = findExplanation(html);
-                explanation = fitToLineWidth(explanation, 119);
-                Console.WriteLine("\nExplanation:\n"+explanation+"\n");
-                if ((image = downloadImage(baseURL + picture)) != null)
+                // Extract the picture name, date, and explanation from the HTML source code
+                string picName = FindName(html);
+                DateTime date = FindDate(html);
+
+                // Print the date and name of the picture
+                PrintDateAndName(date, picName);
+
+                // Extract the explanation from the HTML source code and format it to fit the desired line width
+                string explanation = FindExplanation(html);
+                explanation = FitToLineWidth(explanation, 119);
+
+                // Print the formatted explanation
+                Console.WriteLine("\nExplanation:\n" + explanation + "\n");
+
+                // Download the image from the URL and save it
+                if ((image = await DownloadImageAsync(baseURL + picture)) != null)
                 {
-                    String filePath = getBackgroundPath(date.ToString("yyyy-MM-dd") + " " + picName + ".jpg");
-                    saveBackground(image, filePath);
-                    setBackground(PicturePosition.Fill, filePath);
+                    string filePath = GetBackgroundPath(date.ToString("yyyy-MM-dd") + " " + picName + ".jpg");
+                    SaveBackground(image, filePath);
+                    SetBackground(PicturePosition.Fill, filePath);
                 }
             }
             else
@@ -45,12 +58,12 @@ namespace DailyBackground
 
             Console.WriteLine("Press any key to finish.");
             Console.ReadKey();
-            
         }
 
-        private static string findExplanation(string html)
+        // Find the explanation from the HTML source code using regular expressions
+        private static string FindExplanation(string html)
         {
-            String pattern = @"\<b\> Explanation\: \<\/b\>((\n*|.*)*)\<p\>";
+            string pattern = @"\<b\> Explanation\: \<\/b\>((\n*|.*)*)\<p\>";
             Match m = Regex.Match(html, pattern, RegexOptions.IgnoreCase);
             if (!m.Success)
                 return "";
@@ -65,43 +78,51 @@ namespace DailyBackground
             return explanation.Trim();
         }
 
-        private static string fitToLineWidth(string explanation, int lineWidth)
+        // Fit the explanation text to the specified line width by adding line breaks
+        private static string FitToLineWidth(string explanation, int lineWidth)
         {
             string[] words = explanation.Split(' ');
-            string fitted = "";
+            var sb = new StringBuilder();
             int len = 0;
+
             foreach (string word in words)
             {
                 if (len + word.Length > lineWidth)
                 {
-                    fitted = fitted.Trim();
-                    fitted += "\n";
+                    sb.Replace(' ', '\n', sb.Length - 1, 1);
                     len = 0;
                 }
-                fitted += word + " ";
+
+                sb.Append(word).Append(' ');
                 len += word.Length + 1;
             }
 
-            return fitted;
+            return sb.ToString().Trim();
         }
 
-        private static string downloadSource(string page)
+        // Download the source code of a webpage asynchronously
+        private static async Task<string> DownloadSourceAsync(string page)
         {
-            return new WebClient().DownloadString(page);
+            using (var httpClient = new HttpClient())
+            {
+                return await httpClient.GetStringAsync(page);
+            }
         }
 
-        private static string findPicture(string html)
+        // Find the picture URL from the HTML source code using regular expressions
+        private static string FindPicture(string html)
         {
-            String pattern = @"<a href=""(image\/.*(\.jpg|\.png|\.gif))""";
+            string pattern = @"<a href=""(image\/.*(\.jpg|\.png|\.gif))""";
             Match m = Regex.Match(html, pattern, RegexOptions.IgnoreCase);
             if (m.Success) return m.Groups[1].Value;
             return null;
         }
 
-        static DateTime findDate(String html)
+        // Find the date of the picture from the HTML source code using regular expressions
+        static DateTime FindDate(string html)
         {
-            String pattern = @"\b(\d{4} \w+ \d{1,2})\b";
-            String match = Regex.Match(html, pattern).Groups[1].Value; ;
+            string pattern = @"\b(\d{4} \w+ \d{1,2})\b";
+            string match = Regex.Match(html, pattern).Groups[1].Value; ;
             DateTime picDateTime;
             if (DateTime.TryParseExact(match, "yyyy MMMM d", new CultureInfo("en-US"), DateTimeStyles.AllowWhiteSpaces, out picDateTime))
                 return picDateTime;
@@ -109,29 +130,31 @@ namespace DailyBackground
                 return DateTime.Now;
         }
 
-        static String findName(String html)
+        // Find the name of the picture from the HTML source code using regular expressions
+        static string FindName(string html)
         {
-            String pattern = @"<center>[\r|\n]+<b>(.*)\<\/";
-            String title = Regex.Match(html, pattern, RegexOptions.IgnoreCase).Groups[1].Value;
+            string pattern = @"<center>[\r|\n]+<b>(.*)\<\/";
+            string title = Regex.Match(html, pattern, RegexOptions.IgnoreCase).Groups[1].Value;
 
             if (title.Length == 0) return "No Title";
 
-            String bad = "\\/|<>?*\n" + '"';
-            String name = "";
-            foreach(char c in title.ToCharArray())
+            string bad = "\\/|<>?*\n" + '"';
+            var sb = new StringBuilder();
+            foreach (char c in title)
             {
                 if (!bad.Contains(c.ToString()))
                 {
-                    if (c == ':') name += " -";
-                    else name += c;
+                    if (c == ':') sb.Append(" -");
+                    else sb.Append(c);
                 }
             }
-            return name.Trim();
+            return sb.ToString().Trim();
         }
 
-        private static void printDateAndName(DateTime date, string picName)
+        // Print the date and name of the picture
+        private static void PrintDateAndName(DateTime date, string picName)
         {
-            String dateString = date.ToString("D", new CultureInfo("en-US")) + ": ";
+            string dateString = date.ToString("D", new CultureInfo("en-US")) + ": ";
             Console.Write("\t");
             for (int i = 0; i < dateString.Length + picName.Length; i++) Console.Write("-");
             Console.WriteLine();
@@ -141,64 +164,44 @@ namespace DailyBackground
             Console.WriteLine();
         }
 
-        static Image downloadImage(String URL)
+        // Download an image from the specified URL asynchronously
+        static async Task<Image> DownloadImageAsync(string URL)
         {
-            HttpWebResponse httpWebReponse;
-            Console.WriteLine("Downloading: " + URL);
-            Console.WriteLine(" ...");
             try
             {
-                HttpWebRequest httpWebRequest = (HttpWebRequest)HttpWebRequest.Create(URL);
-                httpWebReponse = (HttpWebResponse)httpWebRequest.GetResponse();
+                using (var httpClient = new HttpClient())
+                {
+                    using (var stream = await httpClient.GetStreamAsync(URL))
+                    {
+                        return Image.FromStream(stream);
+                    }
+                }
             }
             catch
             {
                 Console.WriteLine("FAILED!!");
                 return null;
             }
-            Stream stream = httpWebReponse.GetResponseStream();
-            Image image = Image.FromStream(stream);
-            stream.Close();
-            Console.WriteLine("Download done!");
-            return image;
         }
 
-        static String getBackgroundPath(String fileName)
+        // Get the path for saving the downloaded background image
+        static string GetBackgroundPath(string fileName)
         {
-            String directory = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures) + "/NASA Wallpapers/";
+            string directory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures), "NASA Wallpapers");
             Directory.CreateDirectory(directory);
             return Path.Combine(directory, fileName);
         }
 
-        static Boolean saveBackground(Image background, String filePath)
+        // Save the downloaded background image
+        static void SaveBackground(Image background, string filePath)
         {
-            try
-            {
-                Console.WriteLine("Saving picture as: " + filePath);
-                background.Save(filePath, System.Drawing.Imaging.ImageFormat.Jpeg);
-                return true;
-            }
-            catch { return false; }
+            Console.WriteLine("Saving picture as: " + filePath);
+            background.Save(filePath, System.Drawing.Imaging.ImageFormat.Jpeg);
         }
 
-        public enum PicturePosition
+        // Set the background image with the specified style and file path
+        public static void SetBackground(PicturePosition style, string filePath)
         {
-            Tile, Center, Stretch, Fit, Fill
-        }
-
-        internal sealed class NativeMethods
-        {
-            [DllImport("user32.dll", CharSet = CharSet.Auto)]
-            internal static extern int SystemParametersInfo(
-                int uAction,
-                int uParam,
-                String lpvParam,
-                int fuWinIni);
-        }
-
-        public static void setBackground(PicturePosition style, String filePath)
-        {
-            //Console.WriteLine("Setting background...");
             RegistryKey key = Registry.CurrentUser.OpenSubKey(@"Control Panel\Desktop", true);
             switch (style)
             {
@@ -230,6 +233,22 @@ namespace DailyBackground
             const int SEND_WINDOWS_INI_CHANGE = 2;
             NativeMethods.SystemParametersInfo(SET_DESKTOP_BACKGROUND, 0, filePath, UPDATE_INI_FILE | SEND_WINDOWS_INI_CHANGE);
             Console.WriteLine("Wallpaper set and done!");
+        }
+
+        // Enumeration for different picture positions
+        public enum PicturePosition
+        {
+            Tile, Center, Stretch, Fit, Fill
+        }
+
+        internal sealed class NativeMethods
+        {
+            [DllImport("user32.dll", CharSet = CharSet.Auto)]
+            internal static extern int SystemParametersInfo(
+                int uAction,
+                int uParam,
+                string lpvParam,
+                int fuWinIni);
         }
     }
 }
